@@ -1,0 +1,20 @@
+{
+  "name": "rez-the-keeper",
+  "version": "1.0.0",
+  "description": "Rez, The Keeper is a web app inspired by a shop in an RPG video game.",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "webpack": "^5.3.0",
+    "webpack-cli": "^4.1.0"
+  },
+  "dependencies": {
+    "webpack-dev-server": "^3.11.0"
+  }
+}
