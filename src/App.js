@@ -1,12 +1,12 @@
 import './App.css';
 import React, { useState } from 'react';
-import Button from 'react-bootstrap/Button';
+// import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import Card from 'react-bootstrap/Card';
 
-function SetGoldModal(props) {
+function Gold(props) {
 	const [show, setShow] = useState(false);
 	const handleClose = () => setShow(false);
 	const handleShow = () => setShow(true);
@@ -15,15 +15,17 @@ function SetGoldModal(props) {
 	}
 	return (
 		<>
-		<Button variant="primary" onClick={handleShow}>
-			{props.gold} Gold
-		</Button>
+		<button className="cart cart-btn set-gold" variant="primary" onClick={handleShow}>
+			<h2 className="cart cart-text gold-figure">
+				{props.gold} Gold
+			</h2>
+		</button>
 
 		<Modal show={show} onHide={handleClose} backdrop={false}>
 			<Form onSubmit={handleSubmit}>
 				<InputGroup>
 					<Form.Control type="number" placeholder="Set gold amount" onChange={props.handleChange}/>
-					<Button type="submit" onClick={handleClose}>✓</Button>
+					<button className="cart set-gold-confirm" type="submit" onClick={handleClose}>✓</button>
 				</InputGroup>
 			</Form>
 		</Modal>
@@ -35,7 +37,9 @@ class ItemButton extends React.Component{
 	constructor(props){
 		super(props);
 		this.state = {
-			itemCard: null
+			itemCard: null,
+			position: "relative",
+			zIndex: 5,
 		}
 		this.name = props.name;
 		this.description = props.description;
@@ -51,21 +55,37 @@ class ItemButton extends React.Component{
 				description={this.description}
 			/>
 			)
-		this.setState({itemCard: itemCard});
+		this.setState({
+			itemCard: itemCard, 
+			position: "absolute",
+			zIndex: 10,
+		});
 	}
 	hideItemCard(){
-		this.setState({itemCard: null});
+		this.setState({
+			itemCard: null,
+			position: "relative",
+			zIndex: 5,
+		});
 	}
 	render(){
 		return (
 			<>
 			<button 
 				onClick={this.props.onClick} 
-				onMouseOver={this.showItemCard} 
-				onMouseLeave={this.hideItemCard}
+				variant="secondary"
+				className="shop item-btn item-btn--shop"
 			>
-				{this.name} | Price: {this.price}G
-				{this.state.itemCard}
+				<div className="shop item-btn-layout-container">
+					<div className="shop item-btn-img-container">
+						<img src="http://via.placeholder.com/100" ></img>
+					</div>
+					<div className="shop item-btn-details">
+						<h6 className="shop shop-text price">Price: {this.price}G</h6>
+						<h5 className="shop shop-text name">{this.name}</h5>
+						<p className="shop shop-text description">{this.description}</p>
+					</div>
+				</div>
 			</button>
 			</>
 		);
@@ -94,14 +114,22 @@ class ShopManager extends React.Component{
 		super(props);
 		this.state = {
 			cart: [],
+			costOfCart: 0,
 			itemsForSale: [
 				this.renderItem("Runeblade", "A blade from the Age of Runes.", 2600),
 				this.renderItem("Dark Heart Armor Set", "A set of armor from the darkest of days.", 3000),
+				this.renderItem("Memory", "Who are we but our memories?", 333),
+				this.renderItem("Soul Calibur", "A replica from a cool game.", 3500),
+				this.renderItem("Cinder's Phylactery", "A phylactery belonging to the wicked lich, Count Cinder. Those who control the phylactery control the power.", 5500),
+				this.renderItem("Blood of Sophia", "This phial is filled with the blood of the vampire, Sophia. Little is known of vampires.", 2100),
+				this.renderItem("Tome of the Coast", "A manuscript of some sort written by a cult of wizards. Contains instructions and information about a different world.", 4000),
+				this.renderItem("Puzzlebox Octahedron", "A puzzlebox with 8 sides. Curious.", 333),
 			],
-			gold: 10000,
+			gold: 100000,
 			itemCard: null
 		}
 		this.addItemToCart = this.addItemToCart.bind(this);
+		this.removeItemInCart = this.removeItemInCart.bind(this);
 		this.getItemByName = this.getItemByName.bind(this);
 		this.purchaseItemsInCart = this.purchaseItemsInCart.bind(this);
 		this.resetCart = this.resetCart.bind(this);
@@ -114,23 +142,33 @@ class ShopManager extends React.Component{
 		//push returns the new array length; concat returns the new array
 		var item = this.getItemByName(itemName);
 		var cartItems = this.state.cart.concat(item);
-		this.setState({cart: cartItems});
+		var newTotal = this.state.costOfCart + item.props.price;
+		this.setState({
+			cart: cartItems,
+			costOfCart: newTotal
+		});
+	}
+	removeItemInCart(itemIndex){
+		var item = this.state.cart[itemIndex];
+		var cartItems = this.state.cart.splice(itemIndex, 1)
+		var newTotal = this.state.costOfCart - item.props.price;
+		this.setState({
+			cart: cartItems,
+			costOfCart: newTotal
+		});
 	}
 	itemInCart(itemName){
 		var item = this.getItemByName(itemName);
 		return item !== undefined;
 	}
 	purchaseItemsInCart(){
-		var totalCost = 0;
+		var totalCost = this.state.costOfCart;
 		var userGold = this.state.gold;
-		this.state.cart.map((item) => {
-			return totalCost += item.props.price;
-		});
 		if (totalCost > userGold) console.log("You can't afford this! You have " + userGold + "G");
 		else{
 			userGold -= totalCost;
 			this.setState({gold: userGold});
-			console.log("Thank you for your purchase! You have " + userGold + "G");
+			console.log("Thank you for your purchase! You have " + this.state.gold + "G");
 			this.resetCart();
 		}
 	}
@@ -138,7 +176,10 @@ class ShopManager extends React.Component{
 		this.setState({gold : event.target.value});
 	}
 	resetCart(){
-		this.setState({cart: []});
+		this.setState({
+			cart: [],
+			costOfCart: 0,
+		});
 	}
 	renderItem(itemName, desc, price){
 		return(
@@ -154,20 +195,50 @@ class ShopManager extends React.Component{
 	}
 	render(){
 		const itemsForSale = this.state.itemsForSale.map(item => {
-			return <div key={item.props.name}>{item}</div>
+			return (
+				<div key={item.props.name} className="shop item-container item-container--shop">
+					{item}
+				</div>
+			)
 		})
 		var cartKey = 0;
-		const cart = this.state.cart.map(item =>
-			<div key={cartKey++}>{item.props.name}</div>	
-		)
+		const cart = this.state.cart.map((item) => {
+			var key = cartKey;
+			cartKey++;
+			return <button className="cart item-btn" onClick={() => this.removeItemInCart(key)} key={key}>{item.props.name}</button>	
+		})
 		return (
 			<>
-			<SetGoldModal gold={this.state.gold} handleChange={this.handleGoldChange} />
-			{itemsForSale}
-			{cart}
-			<button onClick={this.purchaseItemsInCart}>Purchase</button>
-			<button onClick={this.resetCart}>Reset</button>
-			{this.state.itemCard}
+			<header>
+				<h1>Rez, The Keeper</h1>
+			</header>
+			<main>
+				<section id="ShopItems">
+					<div className="shop shop-list-window">
+						{itemsForSale}
+					</div>
+				</section>
+				<section id="Cart">
+					<section id="CartItemsList">
+						<div className="cart cart-header">
+							<h1 className="cart cart-text">Cart</h1>
+							<div className="cart cart-reset-btn">
+								<button className="cart item-btn reset-cart" onClick={this.resetCart}>Remove All</button>
+							</div>
+						</div>
+						<div className="cart items-in-cart">
+							{cart}
+						</div>
+					</section>
+					<section id="CartDetails">
+						<h1 className="cart cart-text">Total</h1>
+						<h2 className="cart cart-text total-figure">{this.state.costOfCart}</h2>
+						<button className="cart item-btn purchase" onClick={this.purchaseItemsInCart}>Purchase</button>
+						<Gold gold={this.state.gold} handleChange={this.handleGoldChange} />
+						<h4 className="cart cart-text your-gold">Your Gold (Click to set)</h4>
+					</section>
+				</section>
+			</main>
 			</>
 		);
 	}
@@ -176,7 +247,7 @@ class ShopManager extends React.Component{
 function App(){
 	return(
 		<>
-			<ShopManager />
+		<ShopManager />
 		</>
 	)
 }
